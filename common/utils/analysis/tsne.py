@@ -44,4 +44,4 @@ def visualize(source_feature: torch.Tensor, target_feature: torch.Tensor,
     plt.scatter(X_tsne[:, 0], X_tsne[:, 1], c=domains, cmap=col.ListedColormap([target_color, source_color]), s=20)
     plt.xticks([])
     plt.yticks([])
-    plt.savefig(filename)
+    plt.savefig(filename, format="svg")

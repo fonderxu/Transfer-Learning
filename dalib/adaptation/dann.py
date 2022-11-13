@@ -59,7 +59,8 @@ class DomainAdversarialLoss(nn.Module):
     def __init__(self, domain_discriminator: nn.Module, reduction: Optional[str] = 'mean',
                  grl: Optional = None):
         super(DomainAdversarialLoss, self).__init__()
-        self.grl = WarmStartGradientReverseLayer(alpha=1., lo=0., hi=1., max_iters=1000, auto_step=True) if grl is None else grl
+        self.grl = WarmStartGradientReverseLayer(alpha=1., lo=0., hi=1., max_iters=1000,
+                                                 auto_step=True) if grl is None else grl
         self.domain_discriminator = domain_discriminator
         self.bce = lambda input, target, weight: \
             F.binary_cross_entropy(input, target, weight=weight, reduction=reduction)
@@ -91,3 +92,23 @@ class ImageClassifier(ClassifierBase):
             nn.ReLU()
         )
         super(ImageClassifier, self).__init__(backbone, num_classes, bottleneck, bottleneck_dim, **kwargs)
+
+
+class FaultClassifier(ClassifierBase):
+    def __init__(self, backbone: nn.Module, num_classes: int, bottleneck_dim: Optional[int] = 256, **kwargs):
+        bottleneck = nn.Sequential(
+            nn.Linear(backbone.out_features, 1024),
+            nn.BatchNorm1d(1024),
+            nn.ReLU(),
+            nn.Dropout(p=0.2),
+            nn.Linear(1024, 256),
+            nn.ReLU(),
+            nn.Linear(256, 100),
+            nn.BatchNorm1d(100),
+            nn.ReLU(),
+            nn.Dropout(p=0.2),
+            nn.Linear(100, bottleneck_dim),
+            nn.BatchNorm1d(bottleneck_dim),
+            nn.ReLU(),
+        )
+        super(FaultClassifier, self).__init__(backbone, num_classes, bottleneck, bottleneck_dim, **kwargs)

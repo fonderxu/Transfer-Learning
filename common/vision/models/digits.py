@@ -55,7 +55,6 @@ class DTN(nn.Sequential):
         return nn.Linear(512, self.num_classes)
 
 
-
 def lenet(pretrained=False, **kwargs):
     """LeNet model from
     `"Gradient-based learning applied to document recognition" <http://yann.lecun.com/exdb/publis/pdf/lecun-98.pdf>`_

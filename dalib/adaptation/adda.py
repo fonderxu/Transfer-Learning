@@ -64,3 +64,38 @@ class ImageClassifier(ClassifierBase):
             params.append({"params": self.head.parameters(), "lr": 1.0 * base_lr})
 
         return params
+
+
+class FaultClassifier(ClassifierBase):
+    def __init__(self, backbone: nn.Module, num_classes: int, bottleneck_dim: Optional[int] = 256, **kwargs):
+        bottleneck = nn.Sequential(
+            nn.Linear(backbone.out_features, 1024),
+            nn.BatchNorm1d(1024),
+            nn.ReLU(),
+            nn.Dropout(p=0.2),
+            nn.Linear(1024, 256),
+            nn.ReLU(),
+            nn.Linear(256, 100),
+            nn.BatchNorm1d(100),
+            nn.ReLU(),
+            nn.Dropout(p=0.2),
+            nn.Linear(100, bottleneck_dim),
+            nn.BatchNorm1d(bottleneck_dim),
+            nn.ReLU(),
+        )
+        super(FaultClassifier, self).__init__(backbone, num_classes, bottleneck, bottleneck_dim, **kwargs)
+
+    def freeze_bn(self):
+        for m in self.modules():
+            if isinstance(m, nn.BatchNorm2d) or isinstance(m, nn.BatchNorm1d):
+                m.eval()
+
+    def get_parameters(self, base_lr=1.0, optimize_head=True) -> List[Dict]:
+        params = [
+            {"params": self.backbone.parameters(), "lr": 0.1 * base_lr if self.finetune else 1.0 * base_lr},
+            {"params": self.bottleneck.parameters(), "lr": 1.0 * base_lr}
+        ]
+        if optimize_head:
+            params.append({"params": self.head.parameters(), "lr": 1.0 * base_lr})
+
+        return params
